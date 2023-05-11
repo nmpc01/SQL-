@@ -1,0 +1,60 @@
+CREATE TABLE BIT_DB.Spotifydata (
+id integer PRIMARY KEY,
+artist_name varchar NOT NULL,
+track_name varchar NOT NULL,
+track_id varchar NOT NULL,
+popularity integer NOT NULL,
+danceability decimal(4,3) NOT NULL,
+energy decimal(4,3) NOT NULL,
+song_key integer NOT NULL,
+loudness decimal(5,3) NOT NULL,
+song_mode integer NOT NULL,
+speechiness decimal(5,4) NOT NULL,
+acousticness decimal(6,5) NOT NULL,
+instrumentalness decimal(8,7) NOT NULL,
+liveness decimal(5,4) NOT NULL,
+valence decimal(4,3) NOT NULL,
+tempo decimal(6,3) NOT NULL,
+duration_ms integer NOT NULL,
+time_signature integer NOT NULL )
+
+What are the top 5 most streamed songs on Spotify in 2021?
+SELECT track_name, artist_name, streams 
+FROM spotify_top50_2021
+ORDER BY streams DESC
+LIMIT 5;
+
+Which artist has the most songs in the top 50 chart in 2021?
+SELECT artist_name, COUNT(*) AS song_count
+FROM spotify_top50_2021
+GROUP BY artist_name
+ORDER BY song_count DESC
+LIMIT 1;
+
+What is the average length of the songs in the top 50 chart in 2021?
+SELECT AVG(duration_ms) AS avg_length_ms, 
+       AVG(duration_ms)/1000 AS avg_length_sec, 
+       AVG(duration_ms)/(1000*60) AS avg_length_min
+FROM spotify_top50_2021;
+
+How many songs in the top 50 chart in 2021 have explicit lyrics?
+SELECT COUNT(*) AS explicit_song_count
+FROM spotify_top50_2021
+WHERE explicit = 1;
+
+How many songs in the top 50 chart in 2021 are collaborations (i.e., have more than one artist credited)?
+SELECT COUNT(*) AS collab_count
+FROM (
+    SELECT track_id, COUNT(DISTINCT artist_name) AS artist_count
+    FROM spotify_top50_2021
+    GROUP BY track_id
+    HAVING artist_count > 1
+) AS collabs;
+
+Is there a correlation between the popularity of a song (measured by the "popularity" column) and its length (measured by the "duration_ms" column)?
+SELECT CORR(popularity, duration_ms) AS correlation
+FROM spotify_top50_2021;
+
+
+
+
