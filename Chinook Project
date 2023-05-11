@@ -1,0 +1,92 @@
+An example database for SQL practice is the Chinook database.
+This database has 11 tables representing various entities in a digital media store, such as albums, artists, customers, staff, genres, media types, invoices, and tracks.
+A relational database structure is created by the foreign keys connecting the tables to one another.
+The Chinook database is frequently used in SQL lessons and serves as a useful introduction to SQL concepts and database querying.
+
+SELECT 'Album' AS TableName, COUNT(*) AS NumAttributes, COUNT(*) AS NumRows FROM Album
+UNION ALL
+SELECT 'Artist' AS TableName, COUNT(*) AS NumAttributes, COUNT(*) AS NumRows FROM Artist
+UNION ALL
+SELECT 'Customer' AS TableName, COUNT(*) AS NumAttributes, COUNT(*) AS NumRows FROM Customer
+UNION ALL
+SELECT 'Employee' AS TableName, COUNT(*) AS NumAttributes, COUNT(*) AS NumRows FROM Employee
+UNION ALL
+SELECT 'Genre' AS TableName, COUNT(*) AS NumAttributes, COUNT(*) AS NumRows FROM Genre
+UNION ALL
+SELECT 'Invoice' AS TableName, COUNT(*) AS NumAttributes, COUNT(*) AS NumRows FROM Invoice
+UNION ALL
+SELECT 'InvoiceLine' AS TableName, COUNT(*) AS NumAttributes, COUNT(*) AS NumRows FROM InvoiceLine
+UNION ALL
+SELECT 'MediaType' AS TableName, COUNT(*) AS NumAttributes, COUNT(*) AS NumRows FROM MediaType
+UNION ALL
+SELECT 'Playlist' AS TableName, COUNT(*) AS NumAttributes, COUNT(*) AS NumRows FROM Playlist
+UNION ALL
+SELECT 'PlaylistTrack' AS TableName, COUNT(*) AS NumAttributes, COUNT(*) AS NumRows FROM PlaylistTrack
+UNION ALL
+SELECT 'Track' AS TableName, COUNT(*) AS NumAttributes, COUNT(*) AS NumRows FROM Track;
+
+Compute low stock for each product using a correlated subquery.
+WITH low_stock AS (
+  SELECT productCode, 
+         (SELECT ROUND(SUM(quantityOrdered) / 4.0, 2) 
+          FROM orderdetails 
+          WHERE orderdetails.productCode = products.productCode) AS lowStock
+  FROM products
+)
+SELECT productCode, lowStock
+FROM low_stock
+ORDER BY lowStock DESC
+LIMIT 10;
+
+What are the top 10 products that need restocking based on low stock?
+WITH product_performance AS (
+  SELECT productCode, 
+         ROUND(SUM(quantityOrdered * priceEach), 2) AS productPerformance
+  FROM orderdetails 
+  GROUP BY productCode
+)
+SELECT productCode, productPerformance
+FROM product_performance
+ORDER BY productPerformance DESC
+LIMIT 10;
+
+What are the top 10 best performing products based on product performance?
+WITH low_stock AS (
+  SELECT productCode, 
+         (SELECT ROUND(SUM(quantityOrdered) / 4.0, 2) 
+          FROM orderdetails 
+          WHERE orderdetails.productCode = products.productCode) AS lowStock
+  FROM products
+), product_performance AS (
+  SELECT productCode, 
+         ROUND(SUM(quantityOrdered * priceEach), 2) AS productPerformance
+  FROM orderdetails 
+  GROUP BY productCode
+)
+SELECT productCode, lowStock, productPerformance
+FROM low_stock
+JOIN product_performance USING (productCode)
+WHERE lowStock > 0 AND productCode IN (
+  SELECT productCode 
+  FROM low_stock 
+  ORDER BY lowStock DESC 
+  LIMIT 10
+)
+ORDER BY productPerformance DESC;
+
+Who are the top 5 VIP customers?
+WITH customer_profit AS (
+  SELECT customerNumber, 
+         ROUND(SUM(quantityOrdered * priceEach) - SUM(quantityOrdered * buyPrice), 2) AS profit
+  FROM orderdetails 
+  JOIN products USING (productCode)
+  GROUP BY customerNumber
+)
+SELECT contactLastName, contactFirstName, city, country, profit
+FROM customers
+JOIN customer_profit USING (customerNumber)
+WHERE customerName LIKE '%VIP%'
+ORDER BY profit DESC
+LIMIT 5;
+
+
